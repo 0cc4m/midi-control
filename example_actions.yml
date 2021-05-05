@@ -1,0 +1,16 @@
+Steinberg CMC-QC MIDI 2:
+  function_1:
+    press:
+      type: command
+      command: ["notify-send", "press"]
+    release:
+      type: command
+      command: ["notify-send", "release"]
+  enc_1:
+    cw:
+      type: command
+      command: ["notify-send", "cw"]
+    ccw:
+      type: command
+      command: ["notify-send", "ccw"]
+
