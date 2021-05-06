@@ -34,5 +34,3 @@ button_off: 0
 button_on: 127
 cw: 1
 ccw: 65
-fader_min: 0
-fader_max: 127
