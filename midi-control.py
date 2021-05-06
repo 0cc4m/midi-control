@@ -101,8 +101,9 @@ def main():
                 print(f"{name}: {value}")
             elif msg.type == "pitchwheel":
                 name = "Pitch"
+                channel = msg.channel
                 value = msg.pitch
-                print(f"{name}: {value}")
+                print(f"{name} {channel}: {value}")
 
 
 if __name__ == "__main__":
