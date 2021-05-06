@@ -13,13 +13,15 @@ Steinberg CMC-CH MIDI 1:
       states:
         write: off
         read: on
-  function_1:
+  record:
     press:
-      type: command
-      command: ["notify-send", "press"]
-    release:
-      type: command
-      command: ["notify-send", "release"]
+      type: toggle
+      command_on: ["notify-send", "toggle on"]
+      command_off: ["notify-send", "toggle off"]
+      states_on:
+        record: on
+      states_off:
+        record: off
   enc_1:
     cw:
       type: command

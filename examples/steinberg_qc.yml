@@ -13,13 +13,15 @@ Steinberg CMC-QC MIDI 2:
       states:
         write: off
         read: on
-  function_1:
+  fq_learn:
     press:
-      type: command
-      command: ["notify-send", "press"]
-    release:
-      type: command
-      command: ["notify-send", "release"]
+      type: toggle
+      command_on: ["notify-send", "toggle on"]
+      command_off: ["notify-send", "toggle off"]
+      states_on:
+        fq_learn: on
+      states_off:
+        fq_learn: off
   enc_1:
     cw:
       type: command
