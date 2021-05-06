@@ -1,6 +1,7 @@
 import argparse
 import mido
 import yaml
+import time
 import subprocess
 
 handlers = {}
@@ -24,13 +25,16 @@ def action_handler(name):
     return handler
 
 
-def handle_actions(name, event, actions, midi_out, msg):
+def handle_actions(name, value, actions, midi_out, msg):
+    if name not in states:
+        states[name] = {}
     for action, options in actions.items():
         action_type = options["type"]
-        # event is press, release, cw, ccw
-        if action == event:
-            if name not in states:
-                states[name] = {}
+        if ((action == "press" and value == note_on_values[True]) or
+                (action == "release" and value == note_on_values[False]) or
+                (action == "cw" and value == control_change_values["cw"]) or
+                (action == "ccw" and value == control_change_values["ccw"]) or
+                action == "set"):
             handlers[action_type](options, states[name], midi_out, msg)
 
 
@@ -79,15 +83,48 @@ def fader_command_action(options, state, midi_out, msg):
     subprocess.run(command)
 
 
-def map_controls(device):
+def map_controls(devices):
     # Create dict to enable input lookup by name
-    for type_name, control_type in device.items():
-        if type(control_type) != dict:
+    for device_name, controls in devices.items():
+        if type(controls) != dict:
             continue
-        by_name = {}
-        for b_id, b_name in control_type.items():
-            by_name.update({b_name: {"id": b_id, "type": type_name}})
-        control_by_name.update(by_name)
+        for type_name, control_type in controls.items():
+            if type(control_type) != dict:
+                continue
+            by_name = {}
+            for b_id, b_name in control_type.items():
+                by_name.update(
+                        {b_name: {
+                            "id": b_id,
+                            "type": type_name,
+                            "device": device_name}}
+                        )
+            control_by_name.update(by_name)
+
+
+def handle_messages(inport, outport, device, actions):
+    for msg in inport.iter_pending():
+        if msg.type == "note_on":
+            name = device.get("note_on", {}).get(msg.note, "unknown")
+            value = msg.velocity
+            print(f"{name}: {value}")
+        elif msg.type == "control_change":
+            name = device.get("control_change", {}).get(msg.control,
+                                                        "unknown")
+            value = msg.value
+            print(f"{name}: {value}")
+        elif msg.type == "pitchwheel":
+            name = device.get("pitchwheel", {})\
+                .get(msg.bin()[0], "unknown")
+            channel = msg.channel
+            value = msg.pitch
+            print(f"{name} {channel}: {value}")
+        else:
+            continue
+
+        handle_actions(
+            name, value, actions.get(name, {}), outport, msg,
+        )
 
 
 def main():
@@ -97,52 +134,38 @@ def main():
     args = parser.parse_args()
 
     with open(args.device_file, "r") as f:
-        device = yaml.load(f.read(), Loader=yaml.SafeLoader)
-
-    midi_device = device["midi_device"]
+        devices = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
     with open(args.actions_file, "r") as f:
-        all_actions = yaml.load(f.read(), Loader=yaml.SafeLoader)
-        actions = all_actions.get(midi_device, {})
+        actions = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
-    map_controls(device)
+    map_controls(devices)
 
-    if "button_off" in device:
-        note_on_values[False] = device["button_off"]
-    if "button_on" in device:
-        note_on_values[True] = device["button_on"]
-    if "cw" in device:
-        control_change_values["cw"] = device["cw"]
-    if "ccw" in device:
-        control_change_values["ccw"] = device["ccw"]
+    if "consts" in devices:
+        consts = devices["consts"]
+        if "button_off" in consts:
+            note_on_values[False] = consts["button_off"]
+        if "button_on" in consts:
+            note_on_values[True] = consts["button_on"]
+        if "cw" in consts:
+            control_change_values["cw"] = consts["cw"]
+        if "ccw" in consts:
+            control_change_values["ccw"] = consts["ccw"]
+        devices.pop("consts")
 
-    port = mido.open_input(midi_device)
+    device_ports = {}
+    for device in devices:
+        inport = mido.open_input(device)
+        outport = mido.open_output(device)
+        device_ports[device] = {"in": inport, "out": outport}
 
-    with mido.open_output(midi_device) as outport:
-        for msg in port:
-            if msg.type == "note_on":
-                name = device.get("note_on", {}).get(msg.note, "unknown")
-                value = "press" if msg.velocity == note_on_values[True]\
-                        else "release"
-                print(f"{name}: {value}")
-            elif msg.type == "control_change":
-                name = device.get("control_change", {}).get(msg.control,
-                                                            "unknown")
-                value = "cw" if msg.value == control_change_values["cw"]\
-                        else "ccw"
-                print(f"{name}: {value}")
-            elif msg.type == "pitchwheel":
-                name = device.get("pitchwheel", {})\
-                    .get(msg.bin()[0], "unknown")
-                channel = msg.channel
-                value = "set"
-                print(f"{name} {channel}: {value}")
-            else:
-                continue
-
-            handle_actions(
-                name, value, actions.get(name, {}), outport, msg,
-            )
+    while True:
+        for device, ports in device_ports.items():
+            handle_messages(ports["in"],
+                            ports["out"],
+                            devices[device],
+                            actions[device])
+            time.sleep(0.01)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,10 @@
+Steinberg CMC-QC MIDI 1:
+  enc_1_midi:
+    set:
+      type: fader_command
+      command: ["pactl", "set-sink-volume", "@DEFAULT_SINK@", "$VALUE%"]
+      min: 0
+      max: 100
 Steinberg CMC-QC MIDI 2:
   write:
     press:
@@ -29,4 +36,3 @@ Steinberg CMC-QC MIDI 2:
     ccw:
       type: command
       command: ["notify-send", "ccw"]
-
