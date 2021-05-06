@@ -1,4 +1,18 @@
 Steinberg CMC-QC MIDI 2:
+  write:
+    press:
+      type: command
+      command: ["mumble", "rpc", "mute"]
+      states:
+        write: on
+        read: off
+  read:
+    press:
+      type: command
+      command: ["mumble", "rpc", "unmute"]
+      states:
+        write: off
+        read: on
   function_1:
     press:
       type: command
