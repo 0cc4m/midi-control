@@ -20,6 +20,8 @@ note_on:
 control_change:
   0x10: pan
   0x30: led
+pitchwheel:
+  0xe0: fader
 button_off: 0
 button_on: 127
 cw: 1

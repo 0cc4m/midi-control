@@ -22,11 +22,16 @@ Steinberg CMC-CH MIDI 1:
         record: on
       states_off:
         record: off
-  enc_1:
+  pan:
     cw:
       type: command
       command: ["notify-send", "cw"]
     ccw:
       type: command
       command: ["notify-send", "ccw"]
-
+  fader:
+    set:
+      type: fader_command
+      command: ["pactl", "set-sink-volume", "@DEFAULT_SINK@", "$VALUE%"]
+      min: 0
+      max: 100

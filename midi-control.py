@@ -24,14 +24,14 @@ def action_handler(name):
     return handler
 
 
-def handle_actions(name, event, actions, midi_out):
+def handle_actions(name, event, actions, midi_out, msg):
     for action, options in actions.items():
         action_type = options["type"]
         # event is press, release, cw, ccw
         if action == event:
             if name not in states:
                 states[name] = {}
-            handlers[action_type](options, states[name], midi_out)
+            handlers[action_type](options, states[name], midi_out, msg)
 
 
 def set_led(port, name, value):
@@ -43,14 +43,14 @@ def set_led(port, name, value):
 
 
 @action_handler("command")
-def command_action(options, state, midi_out):
+def command_action(options, state, midi_out, msg):
     subprocess.run(options["command"])
     for led, value in options.get("states", {}).items():
         set_led(midi_out, led, value)
 
 
 @action_handler("toggle")
-def toggle_action(options, state, midi_out):
+def toggle_action(options, state, midi_out, msg):
     if "toggle_state" not in state or not state["toggle_state"]:
         subprocess.run(options["command_on"])
         for led, value in options.get("states_on", {}).items():
@@ -63,7 +63,23 @@ def toggle_action(options, state, midi_out):
         state["toggle_state"] = False
 
 
-def process_actions(actions, device):
+@action_handler("fader_command")
+def fader_command_action(options, state, midi_out, msg):
+    minv = options["min"]
+    maxv = options["max"]
+    val = msg.bin()[2]
+
+    final = int(round(minv + val / 127 * maxv, 0))
+
+    command = options["command"].copy()
+
+    for i in range(0, len(command)):
+        command[i] = command[i].replace("$VALUE", str(final))
+
+    subprocess.run(command)
+
+
+def map_controls(device):
     # Create dict to enable input lookup by name
     for type_name, control_type in device.items():
         if type(control_type) != dict:
@@ -89,7 +105,7 @@ def main():
         all_actions = yaml.load(f.read(), Loader=yaml.SafeLoader)
         actions = all_actions.get(midi_device, {})
 
-    process_actions(actions, device)
+    map_controls(device)
 
     if "button_off" in device:
         note_on_values[False] = device["button_off"]
@@ -108,20 +124,25 @@ def main():
                 name = device.get("note_on", {}).get(msg.note, "unknown")
                 value = "press" if msg.velocity == note_on_values[True]\
                         else "release"
-                handle_actions(name, value, actions.get(name, {}), outport)
                 print(f"{name}: {value}")
             elif msg.type == "control_change":
                 name = device.get("control_change", {}).get(msg.control,
                                                             "unknown")
                 value = "cw" if msg.value == control_change_values["cw"]\
                         else "ccw"
-                handle_actions(name, value, actions.get(name, {}), outport)
                 print(f"{name}: {value}")
             elif msg.type == "pitchwheel":
-                name = "Pitch"
+                name = device.get("pitchwheel", {})\
+                    .get(msg.bin()[0], "unknown")
                 channel = msg.channel
-                value = msg.pitch
+                value = "set"
                 print(f"{name} {channel}: {value}")
+            else:
+                continue
+
+            handle_actions(
+                name, value, actions.get(name, {}), outport, msg,
+            )
 
 
 if __name__ == "__main__":
