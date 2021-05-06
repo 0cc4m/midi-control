@@ -1,7 +1,7 @@
 midi_device: Steinberg CMC-CH MIDI 1
 note_on:
-  0x30: left
-  0x31: right
+  0x30: channel_sel_left
+  0x31: channel_sel_right
   0x4c: freeze
   0x47: folder
   0x2b: insert
@@ -18,7 +18,7 @@ note_on:
   0x00: record
   0x68: jump
 control_change:
-  0x10: input
+  0x10: pan
   0x30: led
 button_off: 0
 button_on: 127
