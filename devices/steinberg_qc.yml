@@ -7,7 +7,7 @@ Steinberg CMC-QC MIDI 1:
     0x49: enc_5_midi
     0x48: enc_6_midi
     0x5b: enc_7_midi
-    0x0a: enc_8_midi
+    0x5d: enc_8_midi
 Steinberg CMC-QC MIDI 2:
   note_on:
     0x36: function_1

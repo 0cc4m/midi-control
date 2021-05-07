@@ -3,6 +3,7 @@ import mido
 import yaml
 import time
 import subprocess
+from dbus import SessionBus
 
 handlers = {}
 states = {}
@@ -81,6 +82,49 @@ def fader_command_action(options, state, midi_out, msg):
         command[i] = command[i].replace("$VALUE", str(final))
 
     subprocess.run(command)
+
+
+@action_handler("dbus")
+def dbus_action(options, state, midi_out, msg):
+    method_name = options["method"]
+    service = options["service"]
+    path = options["path"]
+    if "dbus" not in state:
+        proxy = SessionBus().get_object(service, path)
+        method = proxy.get_dbus_method(method_name)
+        state["dbus"] = method
+
+    args = options.get("args", [])
+
+    state["dbus"](*args)
+
+    for led, value in options.get("states", {}).items():
+        set_led(midi_out, led, value)
+
+
+@action_handler("dbus_toggle")
+def dbus_toggle_action(options, state, midi_out, msg):
+    method_name = options["method"]
+    service = options["service"]
+    path = options["path"]
+    if "dbus_toggle" not in state:
+        proxy = SessionBus().get_object(service, path)
+        method = proxy.get_dbus_method(method_name)
+        state["dbus_toggle"] = {"method": method,
+                                "state": False}
+
+    if state["dbus_toggle"]["state"]:
+        args = options.get("args_on", [])
+        state["dbus_toggle"]["state"] = False
+        for led, value in options.get("states_on", {}).items():
+            set_led(midi_out, led, value)
+    else:
+        args = options.get("args_off", [])
+        state["dbus_toggle"]["state"] = True
+        for led, value in options.get("states_off", {}).items():
+            set_led(midi_out, led, value)
+
+    state["dbus_toggle"]["method"](*args)
 
 
 def map_controls(devices):

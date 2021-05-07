@@ -35,3 +35,24 @@ Steinberg CMC-CH MIDI 1:
       command: ["pactl", "set-sink-volume", "@DEFAULT_SINK@", "$VALUE%"]
       min: 0
       max: 100
+  mute:
+    press:
+      type: dbus_toggle
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: setSelfMuted
+      args_on:
+        - true
+      args_off:
+        - false
+  solo:
+    press:
+      type: dbus
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: startTalking
+    release:
+      type: dbus
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: stopTalking
