@@ -91,9 +91,9 @@ Configure action:
       ...
 ```
 
-Most actions also accept a `states` options (or `states_on` and `states_off` for toggle commands)
+Most actions also accept a `states` option (or `states_on` and `states_off` for toggle commands)
 This is used to define MIDI messages that should be sent back to the controller when the actions gets executed.
-Some controllers accept midi messages to set the state of an associated LEDs, so this con for example be used to display the state of a toggle command.
+Some controllers accept midi messages to set the state of an associated LEDs, so this can for example be used to display the state of a toggle command.
 
 ### command
 ``` yaml
@@ -113,12 +113,12 @@ Some controllers accept midi messages to set the state of an associated LEDs, so
   states_on: 
     button_1: on # Turn led of button_1 on
   states_off: 
-    button_1: off # Turn led of button_1 on
+    button_1: off # Turn led of button_1 off 
 ```
 
 ### fader_command
-This actions takes the third byte of whatever mesage triggered it and maps to the interval specified by the min and max options.
-It the replaces any occurence of `$VALUE` in the command with this value.
+This actions takes the third byte of whatever message triggered it and maps to the interval specified by the min and max options.
+It then replaces any occurence of `$VALUE` in the command with this value.
 
 Example for controlling volume:
 ``` yaml
@@ -131,7 +131,7 @@ set:
 
 ### dbus
 Calls a dbus method.
-Arguments kan be supllied as list in `args`.
+Arguments can be supllied as a list in `args`.
 ``` yaml
 <event>:
   type: dbus
