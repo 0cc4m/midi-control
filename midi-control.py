@@ -1,9 +1,13 @@
 import argparse
+import logging
 import mido
-import yaml
-import time
 import subprocess
+import time
+import yaml
 from dbus import SessionBus
+from dbus.exceptions import DBusException
+
+log = logging.getLogger("midi-controller")
 
 handlers = {}
 states = {}
@@ -90,9 +94,14 @@ def dbus_action(options, state, midi_out, msg):
     service = options["service"]
     path = options["path"]
     if "dbus" not in state:
-        proxy = SessionBus().get_object(service, path)
-        method = proxy.get_dbus_method(method_name)
-        state["dbus"] = method
+        try:
+            proxy = SessionBus().get_object(service, path)
+            method = proxy.get_dbus_method(method_name)
+            state["dbus"] = method
+        except DBusException as e:
+            log.error("Could not create dbus proxy in dbus action: %s"
+                      % e.get_dbus_message())
+            return
 
     args = options.get("args", [])
 
@@ -108,10 +117,15 @@ def dbus_toggle_action(options, state, midi_out, msg):
     service = options["service"]
     path = options["path"]
     if "dbus_toggle" not in state:
-        proxy = SessionBus().get_object(service, path)
-        method = proxy.get_dbus_method(method_name)
-        state["dbus_toggle"] = {"method": method,
-                                "state": False}
+        try:
+            proxy = SessionBus().get_object(service, path)
+            method = proxy.get_dbus_method(method_name)
+            state["dbus_toggle"] = {"method": method,
+                                    "state": False}
+        except DBusException as e:
+            log.error("Could not create dbus proxy in dbus_toggle action: %s"
+                      % e.get_dbus_message())
+            return
 
     if state["dbus_toggle"]["state"]:
         args = options.get("args_on", [])
@@ -151,18 +165,18 @@ def handle_messages(inport, outport, device, actions):
         if msg.type == "note_on":
             name = device.get("note_on", {}).get(msg.note, "unknown")
             value = msg.velocity
-            print(f"{name}: {value}")
+            log.info(f"{name}: {value}")
         elif msg.type == "control_change":
             name = device.get("control_change", {}).get(msg.control,
                                                         "unknown")
             value = msg.value
-            print(f"{name}: {value}")
+            log.info(f"{name}: {value}")
         elif msg.type == "pitchwheel":
             name = device.get("pitchwheel", {})\
                 .get(msg.bin()[0], "unknown")
             channel = msg.channel
             value = msg.pitch
-            print(f"{name} {channel}: {value}")
+            log.info(f"{name} {channel}: {value}")
         else:
             continue
 
@@ -175,7 +189,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("device_file")
     parser.add_argument("actions_file")
+    parser.add_argument("--log", "-l",
+                        default="info",
+                        help="Set loglevel")
     args = parser.parse_args()
+
+    logging.basicConfig(format="[%(levelname)s]: %(message)s",
+                        level=args.log.upper())
 
     with open(args.device_file, "r") as f:
         devices = yaml.load(f.read(), Loader=yaml.SafeLoader)
