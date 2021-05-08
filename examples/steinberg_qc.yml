@@ -1,4 +1,36 @@
+Steinberg CMC-QC MIDI 1:
+  enc_1_midi:
+    set:
+      type: fader_command
+      command: ["pactl", "set-sink-volume", "@DEFAULT_SINK@", "$VALUE%"]
+      min: 0
+      max: 100
 Steinberg CMC-QC MIDI 2:
+  function_2:
+    press:
+      type: dbus_toggle
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: setSelfMuted
+      args_on:
+        - true
+      args_off:
+        - false
+      states_on:
+        write: on
+      states_off:
+        write: off
+  function_3:
+    press:
+      type: dbus
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: startTalking
+    release:
+      type: dbus
+      service: net.sourceforge.mumble.mumble
+      path: /
+      method: stopTalking
   write:
     press:
       type: command
@@ -29,4 +61,3 @@ Steinberg CMC-QC MIDI 2:
     ccw:
       type: command
       command: ["notify-send", "ccw"]
-

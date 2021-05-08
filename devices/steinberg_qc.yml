@@ -1,36 +1,47 @@
-midi_device: Steinberg CMC-QC MIDI 2
-note_on:
-  0x36: function_1
-  0x37: function_2
-  0x38: function_3
-  0x39: function_4
-  0x46: shift
-  0x30: channel_sel_left
-  0x31: channel_sel_right
-  0x51: read
-  0x4e: write
-  0x2a: qc_mode
-  0x32: fq_learn
-  0x2c: eq_mode
-  0x74: midi_mode
-control_change:
-  0x10: enc_1
-  0x11: enc_2
-  0x12: enc_3
-  0x13: enc_4
-  0x14: enc_5
-  0x15: enc_6
-  0x16: enc_7
-  0x17: enc_8
-  0x30: led_1
-  0x31: led_2
-  0x32: led_3
-  0x33: led_4
-  0x34: led_5
-  0x35: led_6
-  0x36: led_7
-  0x37: led_8
-button_off: 0
-button_on: 127
-cw: 1
-ccw: 65
+Steinberg CMC-QC MIDI 1:
+  control_change:
+    0x4a: enc_1_midi
+    0x47: enc_2_midi
+    0x0a: enc_3_midi
+    0x07: enc_4_midi
+    0x49: enc_5_midi
+    0x48: enc_6_midi
+    0x5b: enc_7_midi
+    0x5d: enc_8_midi
+Steinberg CMC-QC MIDI 2:
+  note_on:
+    0x36: function_1
+    0x37: function_2
+    0x38: function_3
+    0x39: function_4
+    0x46: shift
+    0x30: channel_sel_left
+    0x31: channel_sel_right
+    0x51: read
+    0x4e: write
+    0x2a: qc_mode
+    0x32: fq_learn
+    0x2c: eq_mode
+    0x74: midi_mode
+  control_change:
+    0x10: enc_1
+    0x11: enc_2
+    0x12: enc_3
+    0x13: enc_4
+    0x14: enc_5
+    0x15: enc_6
+    0x16: enc_7
+    0x17: enc_8
+    0x30: led_1
+    0x31: led_2
+    0x32: led_3
+    0x33: led_4
+    0x34: led_5
+    0x35: led_6
+    0x36: led_7
+    0x37: led_8
+consts:
+  button_off: 0
+  button_on: 127
+  cw: 1
+  ccw: 65
