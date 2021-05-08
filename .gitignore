@@ -1,1 +1,6 @@
 *\~
+*__pycache__
+.venv
+build
+dist
+midi_control.egg-info
