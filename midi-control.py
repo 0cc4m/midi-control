@@ -1,6 +1,7 @@
 import argparse
 import logging
 import mido
+import os
 import subprocess
 import time
 import yaml
@@ -187,20 +188,22 @@ def handle_messages(inport, outport, device, actions):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("device_file")
-    parser.add_argument("actions_file")
+    parser.add_argument("-d", "--device-file",
+                        default="~/.config/midi-control/device.yml")
+    parser.add_argument("-a", "--actions-file",
+                        default="~/.config/midi-control/actions.yml")
     parser.add_argument("--log", "-l",
-                        default="info",
+                        default="WARNING",
                         help="Set loglevel")
     args = parser.parse_args()
 
     logging.basicConfig(format="[%(levelname)s]: %(message)s",
                         level=args.log.upper())
 
-    with open(args.device_file, "r") as f:
+    with open(os.path.expanduser(args.device_file), "r") as f:
         devices = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
-    with open(args.actions_file, "r") as f:
+    with open(os.path.expanduser(args.actions_file), "r") as f:
         actions = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
     map_controls(devices)
