@@ -1,3 +1,4 @@
+import dbus
 import subprocess
 import logging
 from dbus import SessionBus
@@ -30,7 +31,10 @@ def dbus_checker(options):
     try:
         proxy = SessionBus().get_object(service, path)
         method = proxy.get_dbus_method(method)
-        return method()
+        res = method()
+        if isinstance(res, dbus.types.Boolean):
+            res = bool(res)
+        return res
 
     except DBusException as e:
         log.error("Could not create dbus proxy in dbus action: %s"
