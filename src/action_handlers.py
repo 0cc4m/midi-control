@@ -5,9 +5,12 @@ import logging
 from dbus import SessionBus
 from dbus.exceptions import DBusException
 
+from checkers import checkers
+
 log = logging.getLogger("midi-control")
 
 handler_classes = {}
+
 
 def action_handler(name):
     def handler(handler_class):
@@ -24,6 +27,8 @@ class ActionHandler:
         self.consts = consts
         self.midi_out = midi_out
 
+        self.check_state()
+
     def __call__(self, msg):
         pass
 
@@ -35,6 +40,9 @@ class ActionHandler:
         )
         self.midi_out.send(msg)
 
+    def check_state(self):
+        pass
+
 
 @action_handler("command")
 class CommandAction(ActionHandler):
@@ -42,6 +50,15 @@ class CommandAction(ActionHandler):
         subprocess.run(self.options["command"])
         for led, value in self.options.get("states", {}).items():
             self.set_led(led, value)
+
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            invert = self.options["check"].get("invert", False)
+            result = checkers[check_type](self.options)
+            if isinstance(result, bool) and result ^ invert:
+                for led, value in self.options.get("states", {}).items():
+                    self.set_led(led, value)
 
 
 @action_handler("toggle")
@@ -62,6 +79,19 @@ class ToggleAction(ActionHandler):
                 self.set_led(led, value)
             self.state = True
 
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            result = checkers[check_type](self.options)
+            if result:
+                self.state = True
+                for led, value in self.options.get("states_on", {}).items():
+                    self.set_led(led, value)
+            else:
+                self.state = False
+                for led, value in self.options.get("states_off", {}).items():
+                    self.set_led(led, value)
+
 
 @action_handler("fader_command")
 class FaderCommandAction(ActionHandler):
@@ -76,6 +106,18 @@ class FaderCommandAction(ActionHandler):
         command = [s.replace("$VALUE", str(final)) for s in command]
 
         subprocess.run(command)
+
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            minv = self.options["min"]
+            maxv = self.options["max"]
+            result = int(checkers[check_type](self.options))
+            final = int(round((result - minv) / maxv * 127, 0))
+            for fader in self.options.get("states", []):
+                address = self.controls[fader]["id"]
+                msg = mido.Message.from_bytes([address, 0, final])
+                self.midi_out.send(msg)
 
 
 @action_handler("dbus")
@@ -106,6 +148,15 @@ class DBusAction(ActionHandler):
 
         for led, value in self.options.get("states", {}).items():
             self.set_led(led, value)
+
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            invert = self.options["check"].get("invert", False)
+            result = checkers[check_type](self.options)
+            if result ^ invert:
+                for led, value in self.options.get("states", {}).items():
+                    self.set_led(led, value)
 
 
 @action_handler("dbus_toggle")
@@ -143,3 +194,16 @@ class DBusToggleAction(ActionHandler):
                 self.set_led(led, value)
 
         self.dbus_method(*args)
+
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            result = checkers[check_type](self.options)
+            if result:
+                self.state = True
+                for led, value in self.options.get("states_on", {}).items():
+                    self.set_led(led, value)
+            else:
+                self.state = False
+                for led, value in self.options.get("states_off", {}).items():
+                    self.set_led(led, value)

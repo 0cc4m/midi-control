@@ -46,11 +46,6 @@ def handle_actions(name, value, actions, midi_out, msg):
     if name not in handlers:
         handlers[name] = {}
     for action, options in actions.items():
-        action_type = options["type"]
-        if action not in handlers[name]:
-            handlers[name][action] = handler_classes[action_type](
-                options, control_by_name, consts, midi_out
-            )
         if (
             (action == "press" and value == consts["note_on_values"][True])
             or (action == "release" and value == consts["note_on_values"][False])
@@ -147,9 +142,24 @@ def main():
         outport = mido.open_output(device)
         device_ports[device] = {"in": inport, "out": outport}
 
+        # Empty device buffers
+        time.sleep(0.1)
+        for _ in inport.iter_pending():
+            pass
+
+    # Initialize handlers to set initial control value
+    for dname, device in actions.items():
+        for name, button in device.items():
+            handlers[name] = {}
+            for action, event in button.items():
+                handlers[name][action] = handler_classes[event["type"]](
+                    event, control_by_name, consts, device_ports[dname]["out"]
+                )
+
     while True:
         for device, ports in device_ports.items():
-            handle_messages(ports["in"], ports["out"], devices[device], actions[device])
+            handle_messages(ports["in"], ports["out"], devices[device],
+                            actions[device])
             time.sleep(0.01)
 
 

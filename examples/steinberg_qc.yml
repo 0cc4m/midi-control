@@ -38,6 +38,12 @@ Steinberg CMC-QC MIDI 2:
       states:
         write: on
         read: off
+      check:
+        invert: false
+        type: dbus
+        service: net.sourceforge.mumble.mumble
+        path: /
+        method: isSelfMuted
   read:
     press:
       type: command
@@ -45,6 +51,12 @@ Steinberg CMC-QC MIDI 2:
       states:
         write: off
         read: on
+      check:
+        invert: true
+        type: dbus
+        service: net.sourceforge.mumble.mumble
+        path: /
+        method: isSelfMuted
   fq_learn:
     press:
       type: toggle
