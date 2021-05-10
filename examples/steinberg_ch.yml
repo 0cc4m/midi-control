@@ -6,6 +6,12 @@ Steinberg CMC-CH MIDI 1:
       states:
         write: on
         read: off
+      check:
+        invert: false
+        type: dbus
+        service: net.sourceforge.mumble.mumble
+        path: /
+        method: isSelfMuted
   read:
     press:
       type: command
@@ -13,6 +19,12 @@ Steinberg CMC-CH MIDI 1:
       states:
         write: off
         read: on
+      check:
+        invert: true
+        type: dbus
+        service: net.sourceforge.mumble.mumble
+        path: /
+        method: isSelfMuted
   record:
     press:
       type: toggle
@@ -22,6 +34,12 @@ Steinberg CMC-CH MIDI 1:
         record: on
       states_off:
         record: off
+      check:
+        invert: false
+        type: dbus
+        service: net.sourceforge.mumble.mumble
+        path: /
+        method: isSelfMuted
   pan:
     cw:
       type: command
