@@ -7,7 +7,7 @@ import time
 from dbus import SessionBus
 from dbus.exceptions import DBusException
 
-from checkers import checkers
+from .checkers import checkers
 
 log = logging.getLogger("midi-control")
 

@@ -23,7 +23,7 @@ import logging
 import mido
 import signal
 import yaml
-from action_handlers import handler_classes, terminate_threads
+from .action_handlers import handler_classes, terminate_threads
 
 log = logging.getLogger("midi-control")
 
@@ -165,7 +165,3 @@ def main():
             handle_messages(ports["in"], ports["out"], devices[device],
                             actions[device])
             time.sleep(0.01)
-
-
-if __name__ == "__main__":
-    main()
