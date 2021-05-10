@@ -83,8 +83,8 @@ class CommandAction(ActionHandler):
             invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
             if isinstance(result, str):
-                result = result in self.options["check"].get("eval_true",
-                                                             ["true", "True"])
+                result = result.strip() in self.options["check"]\
+                    .get("eval_true", ["true", "True"])
             if isinstance(result, bool) and result ^ invert:
                 for led, value in self.options.get("states", {}).items():
                     self.set_led(led, value)
@@ -99,12 +99,12 @@ class ToggleAction(ActionHandler):
     def __call__(self, msg):
         if self.state:
             subprocess.run(self.options["command_on"])
-            for led, value in self.options.get("states_on", {}).items():
+            for led, value in self.options.get("states_off", {}).items():
                 self.set_led(led, value)
             self.state = False
         else:
             subprocess.run(self.options["command_off"])
-            for led, value in self.options.get("states_off", {}).items():
+            for led, value in self.options.get("states_on", {}).items():
                 self.set_led(led, value)
             self.state = True
 
@@ -114,8 +114,8 @@ class ToggleAction(ActionHandler):
             invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
             if isinstance(result, str):
-                result = result in self.options["check"].get("eval_true",
-                                                             ["true", "True"])
+                result = result.strip() in self.options["check"]\
+                    .get("eval_true", ["true", "True"])
             if isinstance(result, bool) and result ^ invert:
                 self.state = True
                 for led, value in self.options.get("states_on", {}).items():
@@ -222,12 +222,12 @@ class DBusToggleAction(ActionHandler):
         if self.state:
             args = self.options.get("args_on", [])
             self.state = False
-            for led, value in self.options.get("states_on", {}).items():
+            for led, value in self.options.get("states_off", {}).items():
                 self.set_led(led, value)
         else:
             args = self.options.get("args_off", [])
             self.state = True
-            for led, value in self.options.get("states_off", {}).items():
+            for led, value in self.options.get("states_on", {}).items():
                 self.set_led(led, value)
 
         self.dbus_method(*args)

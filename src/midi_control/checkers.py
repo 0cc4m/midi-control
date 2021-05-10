@@ -19,7 +19,11 @@ def checker(name):
 
 @checker("command")
 def command_checker(options):
-    return subprocess.check_output(options["check"]["command"])
+    return subprocess.run(
+        options["check"]["command"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ).stdout.decode("UTF-8")
 
 
 @checker("dbus")
@@ -38,5 +42,5 @@ def dbus_checker(options):
 
     except DBusException as e:
         log.info("Could not create dbus proxy in dbus action: %s"
-                  % e.get_dbus_message())
+                 % e.get_dbus_message())
         return None
