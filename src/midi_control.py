@@ -21,8 +21,9 @@ import time
 import argparse
 import logging
 import mido
+import signal
 import yaml
-from action_handlers import handler_classes
+from action_handlers import handler_classes, terminate_threads
 
 log = logging.getLogger("midi-control")
 
@@ -100,6 +101,9 @@ def handle_messages(inport, outport, device, actions):
 
 
 def main():
+    signal.signal(signal.SIGTERM, terminate_threads)
+    signal.signal(signal.SIGINT, terminate_threads)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d", "--device-file", default="~/.config/midi-control/device.yml"

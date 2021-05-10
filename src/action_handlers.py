@@ -1,7 +1,9 @@
-import dbus
 import subprocess
 import mido
 import logging
+import sys
+import threading
+import time
 from dbus import SessionBus
 from dbus.exceptions import DBusException
 
@@ -10,6 +12,14 @@ from checkers import checkers
 log = logging.getLogger("midi-control")
 
 handler_classes = {}
+
+terminate = False
+
+
+def terminate_threads(*_):
+    global terminate
+    terminate = True
+    sys.exit(0)
 
 
 def action_handler(name):
@@ -27,7 +37,18 @@ class ActionHandler:
         self.consts = consts
         self.midi_out = midi_out
 
-        self.check_state()
+        check = self.options.get("check", None)
+
+        if check:
+            self.check_state()
+
+            freq = check.get("frequency", None)
+            if freq:
+                self.check_thread = threading.Thread(
+                    target=self.regular_check,
+                    args=(freq,),
+                )
+                self.check_thread.start()
 
     def __call__(self, msg):
         pass
@@ -42,6 +63,11 @@ class ActionHandler:
 
     def check_state(self):
         pass
+
+    def regular_check(self, frequency):
+        while not terminate:
+            time.sleep(1 / frequency)
+            self.check_state()
 
 
 @action_handler("command")
