@@ -1,5 +1,5 @@
 pkgname=midi-control-git
-pkgver=r23.7f8e11f
+pkgver=r29.2022ce3
 pkgrel=1
 _gitname=midi-control
 pkgdesc="Trigger actions on MIDI input"
@@ -19,4 +19,6 @@ pkgver() {
 package() {
   cd "${srcdir}/${_gitname}"
   python setup.py install --root="${pkgdir}/"
+
+  install -D -m 644 extras/midi-control.service ${pkgdir}/usr/lib/systemd/user/midi-control.service
 }

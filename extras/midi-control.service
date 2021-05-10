@@ -1,0 +1,9 @@
+[Unit]
+Description=Trigger actions on MIDI input.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/midi-control
+
+[Install]
+WantedBy=multi-user.target
