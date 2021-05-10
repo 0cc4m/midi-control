@@ -170,7 +170,7 @@ class DBusAction(ActionHandler):
                 method = proxy.get_dbus_method(method_name)
                 self.dbus_method = method
             except DBusException as e:
-                log.error(
+                log.info(
                     "Could not create dbus proxy in dbus action: %s"
                     % e.get_dbus_message()
                 )
@@ -213,7 +213,7 @@ class DBusToggleAction(ActionHandler):
                 method = proxy.get_dbus_method(method_name)
                 self.dbus_method = method
             except DBusException as e:
-                log.error(
+                log.info(
                     "Could not create dbus proxy in dbus action: %s"
                     % e.get_dbus_message()
                 )

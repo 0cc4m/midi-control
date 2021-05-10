@@ -37,6 +37,6 @@ def dbus_checker(options):
         return res
 
     except DBusException as e:
-        log.error("Could not create dbus proxy in dbus action: %s"
+        log.info("Could not create dbus proxy in dbus action: %s"
                   % e.get_dbus_message())
         return None
