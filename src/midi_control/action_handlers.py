@@ -82,6 +82,9 @@ class CommandAction(ActionHandler):
             check_type = self.options["check"]["type"]
             invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
+            if isinstance(result, str):
+                result = result in self.options["check"].get("eval_true",
+                                                             ["true", "True"])
             if isinstance(result, bool) and result ^ invert:
                 for led, value in self.options.get("states", {}).items():
                     self.set_led(led, value)
@@ -108,8 +111,12 @@ class ToggleAction(ActionHandler):
     def check_state(self):
         if "check" in self.options:
             check_type = self.options["check"]["type"]
+            invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
-            if result:
+            if isinstance(result, str):
+                result = result in self.options["check"].get("eval_true",
+                                                             ["true", "True"])
+            if isinstance(result, bool) and result ^ invert:
                 self.state = True
                 for led, value in self.options.get("states_on", {}).items():
                     self.set_led(led, value)
@@ -181,7 +188,10 @@ class DBusAction(ActionHandler):
             check_type = self.options["check"]["type"]
             invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
-            if result ^ invert:
+            if isinstance(result, str):
+                result = result in self.options["check"].get("eval_true",
+                                                             ["true", "True"])
+            if isinstance(result, bool) and result ^ invert:
                 for led, value in self.options.get("states", {}).items():
                     self.set_led(led, value)
 
@@ -225,8 +235,12 @@ class DBusToggleAction(ActionHandler):
     def check_state(self):
         if "check" in self.options:
             check_type = self.options["check"]["type"]
+            invert = self.options["check"].get("invert", False)
             result = checkers[check_type](self.options)
-            if result:
+            if isinstance(result, str):
+                result = result in self.options["check"].get("eval_true",
+                                                             ["true", "True"])
+            if isinstance(result, bool) and result ^ invert:
                 self.state = True
                 for led, value in self.options.get("states_on", {}).items():
                     self.set_led(led, value)
