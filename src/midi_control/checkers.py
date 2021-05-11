@@ -23,7 +23,7 @@ def command_checker(options):
         options["check"]["command"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        check=False
+        check=False,
     ).stdout.decode("UTF-8")
 
 
