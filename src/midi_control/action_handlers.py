@@ -145,7 +145,8 @@ class FaderCommandAction(ActionHandler):
             check_type = self.options["check"]["type"]
             minv = self.options["min"]
             maxv = self.options["max"]
-            result = max(min(int(checkers[check_type](self.options)), maxv),
+            check_val = checkers[check_type](self.options).strip()
+            result = max(min(int(check_val if check_val else 0), maxv),
                          minv)
             final = int(round((result - minv) / maxv * 127, 0))
             for fader in self.options.get("states", []):

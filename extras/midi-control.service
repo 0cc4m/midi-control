@@ -6,4 +6,4 @@ Type=simple
 ExecStart=/usr/bin/midi-control
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
