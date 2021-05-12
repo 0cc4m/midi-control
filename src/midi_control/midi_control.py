@@ -38,7 +38,7 @@ consts = {
     },
     "control_change_values": {
         "cw": 1,
-        "ccw": 64,
+        "ccw": 65,
     },
 }
 
@@ -57,7 +57,7 @@ def handle_actions(name, value, actions, midi_out, msg):
             handlers[name][action](msg)
 
 
-def map_controls(devices):
+def map_controls(devices, ports):
     # Create dict to enable input lookup by name
     for device_name, controls in devices.items():
         if type(controls) != dict:
@@ -66,11 +66,44 @@ def map_controls(devices):
             if type(control_type) != dict:
                 continue
             by_name = {}
-            for b_id, b_name in control_type.items():
+            for b_id, b in control_type.items():
+                b_name = b["name"]
+                led_type = b["led_type"]
                 by_name.update(
-                    {b_name: {"id": b_id, "type": type_name, "device": device_name}}
+                    {b_name: {"id": b_id,
+                              "type": type_name,
+                              "device": device_name,
+                              "device_out_port": ports[device_name]["out"],
+                              "led_type": led_type}}
                 )
             control_by_name.update(by_name)
+
+
+def process_device_definition(devices):
+    p_devices = {}
+    # Iterate all devices
+    for device_name, control_types in devices.items():
+        p_devices[device_name] = {}
+        # Iterate all types of controls
+        for control_type, led_types in control_types.items():
+            p_devices[device_name][control_type] = {}
+            # Iterate all led types
+            print(led_types)
+            for led_type, controls in led_types.items():
+                p_controls = {}
+                # Led type of control not defined -> default led handler
+                if type(controls) == str:
+                    c_id = led_type
+                    c_name = controls
+                    p_controls[c_id] = {"name": c_name, "led_type": "default"}
+                    p_devices[device_name][control_type].update(p_controls)
+                    continue
+
+                for c_id, c_name in controls.items():
+                    p_controls[c_id] = {"name": c_name, "led_type": led_type}
+                p_devices[device_name][control_type].update(p_controls)
+
+    return p_devices
 
 
 def handle_messages(inport, outport, device, actions):
@@ -126,8 +159,6 @@ def main():
     with open(os.path.expanduser(args.actions_file), "r") as f:
         actions = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
-    map_controls(devices)
-
     if "consts" in devices:
         device_consts = devices["consts"]
         if "button_off" in consts:
@@ -151,13 +182,16 @@ def main():
         for _ in inport.iter_pending():
             pass
 
+    processed_devices = process_device_definition(devices)
+    map_controls(processed_devices, device_ports)
+
     # Initialize handlers to set initial control value
     for dname, device in actions.items():
         for name, button in device.items():
             handlers[name] = {}
             for action, event in button.items():
                 handlers[name][action] = handler_classes[event["type"]](
-                    event, control_by_name, consts, device_ports[dname]["out"]
+                    event, control_by_name, consts
                 )
 
     while True:

@@ -32,14 +32,15 @@ Steinberg CMC-QC MIDI 2:
     0x15: enc_6
     0x16: enc_7
     0x17: enc_8
-    0x30: led_1
-    0x31: led_2
-    0x32: led_3
-    0x33: led_4
-    0x34: led_5
-    0x35: led_6
-    0x36: led_7
-    0x37: led_8
+    steinberg_knob:
+      0x30: led_1
+      0x31: led_2
+      0x32: led_3
+      0x33: led_4
+      0x34: led_5
+      0x35: led_6
+      0x36: led_7
+      0x37: led_8
 consts:
   button_off: 0
   button_on: 127

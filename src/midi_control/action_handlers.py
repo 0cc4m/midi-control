@@ -8,6 +8,7 @@ from dbus import SessionBus
 from dbus.exceptions import DBusException
 
 from .checkers import checkers
+from .led_handlers import led_handlers
 
 log = logging.getLogger("midi-control")
 
@@ -31,11 +32,10 @@ def action_handler(name):
 
 
 class ActionHandler:
-    def __init__(self, options, controls, consts, midi_out):
+    def __init__(self, options, controls, consts):
         self.options = options
         self.controls = controls
         self.consts = consts
-        self.midi_out = midi_out
 
         check = self.options.get("check", None)
 
@@ -54,12 +54,13 @@ class ActionHandler:
         pass
 
     def set_led(self, name, value):
-        msg = mido.Message(
-            "note_on",
-            note=self.controls[name]["id"],
-            velocity=self.consts["note_on_values"][value],
-        )
-        self.midi_out.send(msg)
+        led_info = self.controls[name]
+        handler = led_handlers[led_info["led_type"]]
+        handler(led_info["id"],
+                value,
+                led_info["device_out_port"],
+                self.options,
+                self.consts)
 
     def check_state(self):
         pass
@@ -92,8 +93,8 @@ class CommandAction(ActionHandler):
 
 @action_handler("toggle")
 class ToggleAction(ActionHandler):
-    def __init__(self, options, controls, consts, midi_out):
-        super().__init__(options, controls, consts, midi_out)
+    def __init__(self, options, controls, consts):
+        super().__init__(options, controls, consts)
         self.state = False
 
     def __call__(self, msg):
@@ -145,19 +146,59 @@ class FaderCommandAction(ActionHandler):
             check_type = self.options["check"]["type"]
             minv = self.options["min"]
             maxv = self.options["max"]
-            result = max(min(int(checkers[check_type](self.options)), maxv),
-                         minv)
-            final = int(round((result - minv) / maxv * 127, 0))
+            try:
+                result = max(min(
+                    int(checkers[check_type](self.options)), maxv), minv)
+            except ValueError as err:
+                log.info("Check returned invalid value %s, ", err)
+                return
             for fader in self.options.get("states", []):
-                address = self.controls[fader]["id"]
-                msg = mido.Message.from_bytes([address, 0, final])
-                self.midi_out.send(msg)
+                self.set_led(fader, result)
+                
+
+@action_handler("knob_command")
+class KnobCommandAction(ActionHandler):
+    def __init__(self, options, controls, consts):
+        super().__init__(options, controls, consts)
+        self.value = 0
+
+    def __call__(self, msg):
+        minv = self.options.get("min", 0)
+        maxv = self.options.get("max", 100)
+        inc = self.options["inc"]
+
+        if msg.value == self.consts["control_change_values"]["ccw"]:
+            inc *= -1
+
+        self.value += inc
+
+        final = int(max(min(self.value, maxv), minv))
+
+        command = self.options["command"].copy()
+        command = [s.replace("$VALUE", str(final)) for s in command]
+
+        subprocess.run(command, check=False)
+
+    def check_state(self):
+        if "check" in self.options:
+            check_type = self.options["check"]["type"]
+            minv = self.options.get("min", 0)
+            maxv = self.options.get("max", 100)
+            try:
+                result = max(min(
+                    int(checkers[check_type](self.options)), maxv), minv)
+                self.value = result
+            except ValueError as err:
+                log.info("Check returned invalid value %s, ", err)
+                return
+            for knob in self.options.get("states", []):
+                self.set_led(knob, result)
 
 
 @action_handler("dbus")
 class DBusAction(ActionHandler):
-    def __init__(self, options, controls, consts, midi_out):
-        super().__init__(options, controls, consts, midi_out)
+    def __init__(self, options, controls, consts):
+        super().__init__(options, controls, consts)
         self.dbus_method = False
 
     def __call__(self, msg):
@@ -198,8 +239,8 @@ class DBusAction(ActionHandler):
 
 @action_handler("dbus_toggle")
 class DBusToggleAction(ActionHandler):
-    def __init__(self, options, controls, consts, midi_out):
-        super().__init__(options, controls, consts, midi_out)
+    def __init__(self, options, controls, consts):
+        super().__init__(options, controls, consts)
         self.dbus_method = False
         self.state = False
 

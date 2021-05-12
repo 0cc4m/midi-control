@@ -18,10 +18,12 @@ Steinberg CMC-CH MIDI 1:
     0x00: record
     0x68: jump
   control_change:
-    0x10: pan
-    0x30: led
+    steinberg_knob:
+      0x10: pan
+      0x30: led
   pitchwheel:
-    0xe0: fader
+    steinberg_fader:
+      0xe0: fader
 consts:
   button_off: 0
   button_on: 127
